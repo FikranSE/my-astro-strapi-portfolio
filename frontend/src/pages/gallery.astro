@@ -1,0 +1,130 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import { strapiGraphQL } from '../lib/strapi';
+
+const response = await strapiGraphQL({
+    query: `
+        query {
+            projects {
+                title
+                gallery { url }
+                technologies { name }
+            }
+            technologies {
+                name
+            }
+        }
+    `
+}).catch(() => null);
+
+const allImages = (response?.projects || []).flatMap((p: any) => 
+    (p.gallery || []).map((img: any) => ({ 
+        url: img.url, 
+        projectTitle: p.title,
+        technologies: (p.technologies || []).map((t: any) => t.name)
+    }))
+);
+
+const technologies = response?.technologies || [];
+const projects = response?.projects?.map((p: any) => p.title) || [];
+---
+
+<Layout title="FIKRAN | Visual Exploration">
+    <Header />
+
+    <main class="pt-40 pb-20" x-data={`{ 
+        activeFilter: 'all',
+        allImages: ${JSON.stringify(allImages)},
+        get filteredImages() {
+            if (this.activeFilter === 'all') return this.allImages;
+            return this.allImages.filter(img => 
+                img.projectTitle === this.activeFilter || 
+                img.technologies.includes(this.activeFilter)
+            );
+        }
+    }`}>
+        <div class="max-w-7xl mx-auto px-6">
+            <header class="mb-20 text-center space-y-8 reveal">
+                <h1 class="text-7xl md:text-9xl font-black uppercase font-display tracking-tighter leading-none">
+                    Visual<br/><span class="text-indigo-500 italic lowercase">playground.</span>
+                </h1>
+                <p class="text-xl text-gray-500 max-w-xl mx-auto font-medium">A collection of process shots, renders, and pixel-perfect outcomes.</p>
+            </header>
+
+            <!-- Filters -->
+            <div class="mb-16 space-y-8 reveal" style="transition-delay: 100ms;">
+                <div class="flex flex-col gap-6 items-center">
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <button 
+                            @click="activeFilter = 'all'"
+                            :class="activeFilter === 'all' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-white/5 border border-white/10 text-gray-400'"
+                            class="px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-full transition-all duration-300"
+                        >All</button>
+                        
+                        {technologies.map((tech: any) => (
+                            <button 
+                                @click={`activeFilter = '${tech.name}'`}
+                                :class={`activeFilter === '${tech.name}' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-white/5 border border-white/10 text-gray-400'`}
+                                class="px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-full transition-all duration-300"
+                            >{tech.name}</button>
+                        ))}
+                    </div>
+
+                    <div class="w-20 h-px bg-white/10"></div>
+
+                    <div class="flex flex-wrap justify-center gap-3">
+                        {projects.map((title: string) => (
+                            <button 
+                                @click={`activeFilter = '${title}'`}
+                                :class={`activeFilter === '${title}' ? 'bg-white text-black' : 'bg-white/5 border border-white/10 text-gray-500'`}
+                                class="px-6 py-2 text-[9px] font-bold uppercase tracking-widest rounded-xl transition-all duration-300"
+                            >{title}</button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gallery Grid -->
+            <div class="relative min-h-[400px]">
+                <div class="columns-1 md:columns-3 gap-10 space-y-10 reveal" style="transition-delay: 200ms;">
+                    <template x-for="(img, index) in filteredImages" :key="index">
+                        <div class="relative group rounded-[2.5rem] overflow-hidden border border-white/5 active:scale-95 transition-all duration-500 backdrop-blur-sm">
+                            <img 
+                                :src="'http://localhost:1337' + img.url" 
+                                alt="" 
+                                class="w-full grayscale group-hover:grayscale-0 transition-all duration-700"
+                            />
+                            <div class="absolute inset-x-0 bottom-0 p-8 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-gradient-to-t from-black via-black/80 to-transparent translate-y-4 group-hover:translate-y-0">
+                                <p class="text-[10px] font-black uppercase text-indigo-400 tracking-widest mb-1" x-text="img.projectTitle"></p>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="tech in img.technologies">
+                                        <span class="text-[8px] text-gray-400 uppercase font-bold" x-text="tech"></span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Empty State -->
+                <div x-show="filteredImages.length === 0" class="py-40 text-center reveal" x-transition>
+                    <p class="text-gray-500 font-bold uppercase tracking-widest italic text-sm">No snapshots found for this category.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    import Alpine from 'alpinejs';
+    window.Alpine = Alpine;
+    Alpine.start();
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('active');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>

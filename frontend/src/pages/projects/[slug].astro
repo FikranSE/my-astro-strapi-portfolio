@@ -1,0 +1,229 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import { strapiGraphQL } from '../../lib/strapi';
+import { marked } from 'marked';
+
+export async function getStaticPaths() {
+    const response = await strapiGraphQL({
+        query: `query { projects { slug } }`
+    }).catch(() => null);
+    
+    return (response?.projects || []).map((p: any) => ({
+        params: { slug: p.slug }
+    }));
+}
+
+const { slug } = Astro.params;
+
+const response = await strapiGraphQL({
+    query: `
+        query($slug: String!) {
+            projects(filters: { slug: { eq: $slug } }) {
+                title
+                description
+                start_date
+                release_date
+                deploy_url
+                download_url
+                github_url
+                project_status
+                cover { url }
+                access_image { url }
+                gallery { url }
+                technologies { 
+                    name
+                    icon { url }
+                }
+            }
+        }
+    `,
+    variables: { slug }
+}).catch(() => null);
+
+const project = response?.projects?.[0];
+
+if (!project) {
+    return Astro.redirect('/404');
+}
+
+const descriptionHtml = marked.parse(project.description || '');
+
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+};
+---
+
+<Layout title={`${project.title} | FIKRAN Case Study`}>
+    <Header />
+
+    <main class="pt-40 pb-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <!-- Header -->
+            <header class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-start lg:items-end mb-20 lg:mb-32 reveal">
+                <div class="space-y-6 lg:space-y-10">
+                    <h1 class="text-5xl md:text-6xl lg:text-8xl font-black uppercase font-display leading-[0.9] lg:leading-[0.85] tracking-tighter">
+                        {project.title}
+                    </h1>
+                </div>
+                <div class="lg:pb-4 lg:text-right flex flex-col items-start lg:items-end gap-4">
+                    {project.project_status === 'ongoing' && (
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2">
+                            <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                            Project In Progress
+                        </span>
+                    )}
+                    {project.project_status === 'private' && (
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-[10px] font-black text-red-400 uppercase tracking-widest mb-2">
+                            <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                            Private Access Only
+                        </span>
+                    )}
+                    {project.project_status === 'completed' && (
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                            Project Completed
+                        </span>
+                    )}
+                    <p class="text-gray-400 text-base lg:text-lg font-bold uppercase tracking-widest border-b border-white/10 pb-4 inline-block">
+                        Timeline / {formatDate(project.start_date)} {project.release_date ? `— ${formatDate(project.release_date)}` : '— Present'}
+                    </p>
+                </div>
+            </header>
+
+            <!-- Main Visual -->
+            <div class="aspect-video w-full rounded-[2.5rem] lg:rounded-[4rem] overflow-hidden bg-neutral-900 border border-white/5 reveal shadow-2xl" style="transition-delay: 100ms;">
+                {project.access_image?.url ? (
+                    <img 
+                        src={`http://localhost:1337${project.access_image.url}`} 
+                        alt={project.title} 
+                        class="w-full h-full object-cover"
+                    />
+                ) : project.cover?.url ? (
+                    <img 
+                        src={`http://localhost:1337${project.cover.url}`} 
+                        alt={project.title} 
+                        class="w-full h-full object-cover"
+                    />
+                ) : (
+                    <div class="w-full h-full bg-gradient-to-br from-indigo-900 to-black"></div>
+                )}
+            </div>
+
+            <!-- Content -->
+            <div class="grid lg:grid-cols-3 gap-20 mt-32">
+                <div class="lg:col-span-2 reveal">
+                    <h2 class="text-3xl font-black uppercase font-display mb-10 border-l-4 border-indigo-500 pl-8">Background</h2>
+                    <div class="prose-custom lg:prose-xl" set:html={descriptionHtml} />
+                </div>
+                
+                <aside class="space-y-16 reveal" style="transition-delay: 200ms;">
+                    <section>
+                        <h3 class="text-sm font-black uppercase tracking-widest text-gray-500 mb-6 font-display underline underline-offset-8">Core Tech</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            {project.technologies.map((tech: any) => (
+                                <div class="p-5 rounded-2xl bg-white/5 border border-white/10 font-bold text-xs uppercase tracking-widest text-center text-white flex flex-col items-center gap-4 transition-colors hover:bg-white/10 hover:border-indigo-500/30">
+                                    {tech.icon?.url ? (
+                                        <img src={`http://localhost:1337${tech.icon.url}`} alt={tech.name} class="w-10 h-10 object-contain" />
+                                    ) : (
+                                        <div class="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-indigo-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                        </div>
+                                    )}
+                                    {tech.name}
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {(project.deploy_url || project.download_url || project.github_url) && (
+                        <section class="space-y-6">
+                            <h3 class="text-sm font-black uppercase tracking-widest text-gray-500 mb-6 font-display underline underline-offset-8">Access</h3>
+                            
+                            <div class="space-y-4">
+                                {project.deploy_url && (
+                                    <a href={project.deploy_url} target="_blank" class="flex items-center justify-between p-6 rounded-[2rem] bg-indigo-600 hover:bg-indigo-500 text-white transition-all group shadow-xl shadow-indigo-600/20">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                            </div>
+                                            <span class="text-xs font-black uppercase tracking-widest">Live Demo</span>
+                                        </div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
+                                )}
+                                {project.download_url && (
+                                    <a href={project.download_url} target="_blank" class="flex items-center justify-between p-6 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all group">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center p-2">
+                                                {project.download_url.includes('play.google.com') ? (
+                                                    <img src="https://www.vectorlogo.zone/logos/google_play/google_play-icon.svg" class="w-full h-full object-contain" alt="Play Store" />
+                                                ) : project.download_url.includes('apple.com') ? (
+                                                    <img src="https://www.vectorlogo.zone/logos/apple/apple-icon.svg" class="w-full h-full object-contain brightness-0 invert" alt="App Store" />
+                                                ) : (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <span class="text-xs font-black uppercase tracking-widest">
+                                                {project.download_url.includes('play.google.com') ? 'Play Store' : project.download_url.includes('apple.com') ? 'App Store' : 'Download APP'}
+                                            </span>
+                                        </div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-transform group-hover:translate-y-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                    </a>
+                                )}
+                                {project.github_url && (
+                                    <a href={project.github_url} target="_blank" class="flex items-center justify-between p-6 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all group">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center p-2.5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full fill-current" viewBox="0 0 24 24">
+                                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.042-1.416-4.042-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                                </svg>
+                                            </div>
+                                            <span class="text-xs font-black uppercase tracking-widest">Source Code</span>
+                                        </div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
+                                )}
+                            </div>
+                        </section>
+                    )}
+                </aside>
+            </div>
+
+            <!-- Gallery -->
+            {project.gallery?.length > 0 && (
+                <section class="mt-40">
+                    <h2 class="text-3xl font-black uppercase font-display mb-20 text-center">Visual <span class="text-indigo-500 italic">Journal.</span></h2>
+                    <div class="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
+                        {project.gallery.map((img: any, idx: number) => (
+                            <div class="overflow-hidden rounded-[2rem] border border-white/5 reveal" style={`transition-delay: ${idx * 50}ms;`}>
+                                <img src={`http://localhost:1337${img.url}`} alt="" class="w-full hover:scale-105 transition-transform duration-700" />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+        </div>
+    </main>
+</Layout>
+
+<script>
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('active');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>

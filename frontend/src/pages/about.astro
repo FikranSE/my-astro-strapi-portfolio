@@ -1,0 +1,89 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+---
+
+<Layout title="About | FIKRAN">
+    <Header />
+
+    <main class="pt-40 pb-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-20 items-center">
+                <div class="reveal">
+                    <h1 class="text-6xl md:text-8xl font-black uppercase font-display leading-[0.8] tracking-tighter mb-12">
+                        The <span class="text-indigo-500 italic">FIKRAN</span> Behind the Work.
+                    </h1>
+                    <div class="prose-custom">
+                        <p>
+                            Hello! I’m a dedicated Full-Stack and Mobile Developer based in Indonesia. I specialize in building scalable, user-focused applications that turn complex problems into efficient digital solutions across web and mobile platforms.
+                        </p>
+                        <p>
+                            With a solid background in Information Systems, I have worked with various companies to develop everything from real-time GPS tracking systems to secure payment platforms. My approach is centered on writing clean code, maintaining high performance, and ensuring a seamless experience for every user.
+                        </p>
+                        <p>
+                            When I’m not building applications or debugging logic, I enjoy exploring the latest in creative coding, such as integrating 2D/3D physics and interactive animations into mobile environments.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mt-16 pt-16 border-t border-white/5 font-display">
+                        <div class="space-y-6">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-indigo-500 underline underline-offset-8 decoration-2">Specialized In</h3>
+                            <ul class="space-y-4 text-xs font-bold text-gray-400 uppercase tracking-widest leading-loose">
+                                <li><span class="text-white block mb-1">Mobile Dev:</span> React Native, Kotlin, Flutter</li>
+                                <li><span class="text-white block mb-1">Full-Stack:</span> Laravel, Next.js, Express.js</li>
+                                <li><span class="text-white block mb-1">Integration:</span> REST APIs, Socket.io, Payment Gateways</li>
+                            </ul>
+                        </div>
+                        <div class="space-y-6">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-indigo-500 underline underline-offset-8 decoration-2">Philosophy</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed font-bold uppercase tracking-widest">
+                                I am a results-driven developer who believes in using creative problem-solving and strong ownership to build reliable systems that deliver a real impact.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative reveal" style="transition-delay: 200ms;">
+                    <div class="aspect-[4/5] rounded-[3rem] overflow-hidden border border-white/10 relative group bg-neutral-900">
+                        <img 
+                            src="/fikran.jpeg" 
+                            alt="Fikran - Full-Stack & Mobile Developer" 
+                            class="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000"
+                        />
+                        <div class="absolute inset-0 bg-indigo-500/10 mix-blend-overlay"></div>
+                    </div>
+                    
+                    <!-- Decorative Elements -->
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-600/20 blur-[80px] rounded-full"></div>
+                    <div class="absolute -bottom-10 -left-10 p-8 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-3xl reveal" style="transition-delay: 400ms;">
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-2">Location</p>
+                        <p class="text-xl font-black font-display text-white italic">Indonesia.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experience / Services -->
+            <section class="mt-40 grid md:grid-cols-3 gap-10">
+                {[
+                    { title: "Mobile", desc: "Native & Cross-platform apps focused on high-performance and smooth animations." },
+                    { title: "Web", desc: "Scalable Full-Stack systems built with modern architectures for high traffic." },
+                    { title: "Scale", desc: "Optimizing legacy systems and integrating complex APIs for modern demands." }
+                ].map((service, idx) => (
+                    <div class="p-12 rounded-[2.5rem] bg-white/5 border border-white/5 hover:bg-indigo-600/5 transition-all text-center reveal" style={`transition-delay: ${idx * 100}ms;`}>
+                        <h3 class="text-2xl font-black uppercase font-display mb-6 text-indigo-500 italic">{service.title}.</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed font-medium uppercase tracking-tight">{service.desc}</p>
+                    </div>
+                ))}
+            </section>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('active');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>

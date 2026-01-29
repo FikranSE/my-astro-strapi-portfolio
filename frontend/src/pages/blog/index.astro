@@ -1,0 +1,94 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import { strapiGraphQL } from '../../lib/strapi';
+
+// Fetch articles from Strapi
+const response = await strapiGraphQL({
+  query: `
+    query {
+      articles {
+        title
+        slug
+        publishedAt
+        excerpt
+        cover {
+          url
+        }
+        category {
+          name
+        }
+      }
+    }
+  `
+});
+
+const posts = response?.articles || [];
+const STRAPI_BASE_URL = 'http://localhost:1337'; // URL Strapi Anda
+
+function getImageUrl(url: string | null) {
+  if (!url) return null;
+  return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
+}
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+---
+
+<Layout title="Blog - TechHub">
+    <Header />
+
+    <main class="pt-32 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <header class="text-center mb-20">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-6">Our Blog</h1>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                Insights, updates, and technical tutorials from the TechHub team. Stay up to date with the latest in the ecosystem.
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {posts.map(post => (
+                <a href={`/blog/${post.slug}`} class="group">
+                    <article class="relative">
+                        <div class="aspect-[16/9] rounded-3xl overflow-hidden bg-white/5 border border-white/10 mb-6 relative">
+                            {post.cover?.url ? (
+                                <img 
+                                    src={getImageUrl(post.cover.url)} 
+                                    alt={post.title}
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                            ) : (
+                                <div class="w-full h-full bg-gradient-to-br from-indigo-900/40 to-violet-900/40 opacity-50"></div>
+                            )}
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
+                            <div class="absolute top-6 left-6 px-4 py-1.5 bg-indigo-600 text-[10px] font-bold uppercase tracking-widest text-white rounded-xl">
+                                {post.category?.name || 'Article'}
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="text-sm text-gray-500 font-medium">{formatDate(post.publishedAt)}</div>
+                            <h2 class="text-2xl md:text-3xl font-bold text-white group-hover:text-indigo-400 transition-colors">
+                                {post.title}
+                            </h2>
+                            <p class="text-gray-400 leading-relaxed line-clamp-2">
+                                {post.excerpt}
+                            </p>
+                            <div class="pt-4 flex items-center gap-2 text-indigo-400 font-bold text-sm tracking-wide">
+                                Read Article 
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </div>
+                        </div>
+                    </article>
+                </a>
+            ))}
+        </div>
+    </main>
+</Layout>

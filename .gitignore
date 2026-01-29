@@ -1,0 +1,39 @@
+# Dependencies
+**/node_modules/
+
+# Build outputs
+**/dist/
+**/.astro/
+**/build/
+**/.strapi/
+
+# Environment variables
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs
+**/*.log
+**/pids
+**/logs
+
+# Databases
+**/*.sqlite
+**/*.sqlite3
+**/*.tmp
+**/database/data.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Strapi specific
+**/exports
+**/.strapi-updater.json
+**/.strapi-cloud.json
+backend/public/uploads/*
+!backend/public/uploads/.gitkeep
+
+# Local editor settings
+.vscode/
+.idea/

@@ -1,0 +1,109 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import { strapiGraphQL } from '../../lib/strapi';
+import { marked } from 'marked';
+
+export async function getStaticPaths() {
+    const response = await strapiGraphQL({
+        query: `query { articles { slug } }`
+    });
+    
+    const articles = response?.articles || [];
+    console.log('Fetched slugs from Strapi:', articles.map((a: any) => a.slug));
+    
+    return articles.map((article: any) => ({
+        params: { slug: article.slug }
+    }));
+}
+
+const { slug } = Astro.params;
+
+const response = await strapiGraphQL({
+    query: `
+        query($slug: String!) {
+            articles(filters: { slug: { eq: $slug } }) {
+                title
+                content
+                publishedAt
+                cover {
+                    url
+                }
+                category {
+                    name
+                }
+            }
+        }
+    `,
+    variables: { slug }
+});
+
+const article = response?.articles?.[0];
+
+if (!article) {
+    return Astro.redirect('/404');
+}
+
+const contentHtml = marked.parse(article.content || '');
+
+const STRAPI_BASE_URL = 'http://localhost:1337';
+
+function getImageUrl(url: string | null) {
+  if (!url) return null;
+  return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
+}
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+---
+
+<Layout title={`${article.title} - Blog`}>
+    <Header />
+
+    <main class="pt-32 pb-20 max-w-4xl mx-auto px-4 sm:px-6">
+        <header class="mb-12">
+            <div class="flex items-center gap-3 text-sm text-indigo-400 font-bold uppercase tracking-widest mb-6">
+                <span>Article</span>
+                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                <span class="text-gray-500">{formatDate(article.publishedAt)}</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-8 leading-tight">{article.title}</h1>
+            
+            {article.cover?.url && (
+                <div class="mb-12 rounded-3xl overflow-hidden aspect-video border border-white/10 group">
+                    <img 
+                        src={getImageUrl(article.cover.url)} 
+                        alt={article.title} 
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                </div>
+            )}
+
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-violet-500"></div>
+                <div>
+                    <div class="text-white font-bold">TechHub Team</div>
+                    <div class="text-xs text-gray-500">Posted in {article.category?.name || 'Technology'}</div>
+                </div>
+            </div>
+        </header>
+
+        <article class="prose-custom">
+            <div set:html={contentHtml} />
+
+            <div class="mt-20 p-12 rounded-[2rem] bg-indigo-500/5 border border-indigo-500/10 text-center">
+                <h3 class="text-white mt-0 mb-4">Stay Updated!</h3>
+                <p class="text-gray-400 mb-8">Join thousands of subscribers and get the latest technical updates in your inbox.</p>
+                <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                    <input type="email" placeholder="you@example.com" class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <button class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-2xl transition-all active:scale-95 shadow-xl shadow-indigo-600/20">Subscribe</button>
+                </div>
+            </div>
+        </article>
+    </main>
+</Layout>

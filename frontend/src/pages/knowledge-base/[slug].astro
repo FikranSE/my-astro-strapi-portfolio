@@ -1,0 +1,99 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+
+export async function getStaticPaths() {
+    // Mock for build time
+    return [
+        { params: { slug: 'getting-started-astro-strapi' } },
+        { params: { slug: 'content-sovereignty' } },
+        { params: { slug: 'advanced-graphql-strapi-v5' } },
+    ];
+}
+
+const { slug } = Astro.params;
+
+// Mock content
+const article = {
+    title: slug?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+    content: `
+        <h2>Introduction</h2>
+        <p>This is a placeholder for the article content. In a production environment, this would be fetched from <strong>Strapi CMS</strong> using a GraphQL query based on the slug: <code>"${slug}"</code>.</p>
+        
+        <h3>Prerequisites</h3>
+        <ul>
+            <li>Node.js 18 or higher</li>
+            <li>A Strapi instance running on port 1337</li>
+            <li>Astro frontend configured with Tailwind</li>
+        </ul>
+
+        <blockquote>
+            "The future of the web is static-first, dynamic-always. Astro provides the perfect bridge between performance and interactivity."
+        </blockquote>
+
+        <p>To implement real data fetching, you would use the <code>strapiGraphQL</code> utility we created in <code>src/lib/strapi.ts</code> inside this page's frontmatter.</p>
+        
+        <pre><code>// Example fetch logic
+const data = await strapiGraphQL({
+    query: ARTICLE_QUERY,
+    variables: { slug }
+});</code></pre>
+    `,
+    category: "Technical",
+    author: "Jane Doe",
+    date: "January 28, 2026",
+    readingTime: "10 min read"
+};
+---
+
+<Layout title={`${article.title} - TechHub`}>
+    <Header />
+
+    <main class="pt-32 pb-20 max-w-4xl mx-auto px-4 sm:px-6">
+        <nav class="flex items-center gap-2 text-sm text-gray-500 mb-12">
+            <a href="/" class="hover:text-white transition-colors">Home</a>
+            <span>/</span>
+            <a href="/knowledge-base" class="hover:text-white transition-colors">Knowledge Base</a>
+            <span>/</span>
+            <span class="text-gray-300 truncate">{article.title}</span>
+        </nav>
+
+        <article class="prose-custom">
+            <div class="mb-12">
+                <div class="inline-block px-3 py-1 bg-indigo-600/10 text-indigo-400 text-xs font-bold uppercase tracking-widest rounded-lg mb-6 border border-indigo-500/20">
+                    {article.category}
+                </div>
+                <h1 class="text-4xl md:text-6xl font-bold text-white mb-8 leading-tight">
+                    {article.title}
+                </h1>
+                
+                <div class="flex items-center gap-6 py-6 border-y border-white/5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500"></div>
+                        <div>
+                            <p class="text-sm font-bold text-white">{article.author}</p>
+                            <p class="text-xs text-gray-500">Senior Content Engineer</p>
+                        </div>
+                    </div>
+                    <div class="h-8 w-[1px] bg-white/5"></div>
+                    <div class="text-sm">
+                        <p class="font-medium text-gray-400">{article.date}</p>
+                        <p class="text-xs text-gray-500">{article.readingTime}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div set:html={article.content} />
+
+            <div class="mt-20 p-8 rounded-3xl bg-gradient-to-br from-indigo-600/10 to-violet-600/10 border border-white/10 text-center">
+                <h3 class="text-2xl font-bold text-white mb-4">Did this article help?</h3>
+                <p class="text-gray-400 mb-8 max-w-md mx-auto">Our community is always here to help. Join the discussion on our Discord server.</p>
+                <div class="flex items-center justify-center gap-4">
+                    <button class="px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95">Yes, absolutely!</button>
+                    <button class="px-6 py-3 bg-white/5 text-white font-bold rounded-xl hover:bg-white/10 border border-white/10 transition-all active:scale-95">Wait, I still have questions</button>
+                </div>
+            </div>
+        </article>
+    </main>
+</Layout>

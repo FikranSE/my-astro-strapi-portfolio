@@ -1,0 +1,145 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import { strapiGraphQL } from '../../lib/strapi';
+import { marked } from 'marked';
+
+const response = await strapiGraphQL({
+    query: `
+        query {
+            projects {
+                title
+                slug
+                description
+                project_status
+                cover { url }
+                technologies { 
+                    name
+                    icon { url }
+                }
+            }
+            technologies {
+                name
+                icon { url }
+            }
+        }
+    `
+}).catch(() => null);
+
+const projects = response?.projects || [];
+const technologies = response?.technologies || [];
+---
+
+<Layout title="Projects | FIKRAN Portfolio">
+    <Header />
+
+    <main class="pt-40 pb-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <header class="mb-20 space-y-6 reveal">
+                <h1 class="text-6xl md:text-8xl font-black uppercase font-display leading-[0.8] tracking-tighter">
+                    The <span class="text-indigo-500">Archive.</span>
+                </h1>
+                <p class="text-xl text-gray-400 max-w-2xl font-light">
+                    A comprehensive collection of my experiments, production builds, and creative explorations.
+                </p>
+            </header>
+
+            <!-- Interactive Filters (Mock for now, will be React) -->
+            <div class="mb-16 flex flex-wrap gap-4 reveal" style="transition-delay: 100ms;">
+                <button class="px-8 py-3 bg-indigo-600 text-white text-xs font-bold uppercase tracking-widest rounded-full shadow-lg shadow-indigo-600/20">All</button>
+                {technologies.map((tech: any) => (
+                    <button class="px-8 py-3 bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 text-xs font-bold uppercase tracking-widest rounded-full transition-all flex items-center gap-2">
+                        {tech.icon?.url && (
+                            <img src={`http://localhost:1337${tech.icon.url}`} alt={tech.name} class="w-4 h-4 object-contain" />
+                        )}
+                        {tech.name}
+                    </button>
+                ))}
+            </div>
+
+            <!-- Projects Grid -->
+            <div class="max-w-5xl mx-auto grid grid-cols-1 gap-16 md:gap-32 reveal" style="transition-delay: 200ms;">
+                {projects.map((project: any) => (
+                    <a href={`/projects/${project.slug}`} class="group block">
+                        <section class="flex flex-col lg:flex-row gap-10 md:gap-20 p-8 md:p-14 rounded-[3.5rem] md:rounded-[5rem] bg-white/[0.03] border border-white/5 hover:border-indigo-500/30 transition-all duration-700 hover:bg-white/[0.08] backdrop-blur-sm">
+                            <div class="w-full lg:w-[42%] aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-neutral-900 shrink-0 shadow-2xl">
+                                {project.cover?.url ? (
+                                    <img 
+                                        src={`http://localhost:1337${project.cover.url}`} 
+                                        alt={project.title}
+                                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                ) : (
+                                    <div class="w-full h-full bg-gradient-to-tr from-indigo-900 to-black"></div>
+                                )}
+                            </div>
+                            <div class="w-full sm:py-4 flex flex-col justify-between">
+                                <div class="space-y-4">
+                                    <div class="flex flex-wrap items-center gap-3">
+                                        <div class="flex flex-wrap gap-2">
+                                            {project.technologies?.slice(0, 2).map((tech: any) => (
+                                                <span class="flex items-center gap-1.5 text-[10px] font-black text-indigo-400 uppercase tracking-widest">
+                                                    {tech.icon?.url && (
+                                                        <img src={`http://localhost:1337${tech.icon.url}`} alt={tech.name} class="w-3.5 h-3.5 object-contain" />
+                                                    )}
+                                                    {tech.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        {project.project_status === 'ongoing' && (
+                                            <span class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-[9px] font-black text-orange-400 uppercase tracking-widest">
+                                                <span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
+                                                In Progress
+                                            </span>
+                                        )}
+                                        {project.project_status === 'private' && (
+                                            <span class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-[9px] font-black text-red-400 uppercase tracking-widest">
+                                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                                Private Access
+                                            </span>
+                                        )}
+                                        {project.project_status === 'completed' && (
+                                            <span class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black text-emerald-400 uppercase tracking-widest">
+                                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                                Completed
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h2 class="text-3xl md:text-5xl lg:text-4xl xl:text-6xl font-black uppercase font-display leading-[0.9] tracking-tighter">{project.title}</h2>
+                                    <div class="text-gray-400 text-sm md:text-base line-clamp-3 leading-relaxed prose-custom-sm max-w-xl" set:html={marked.parse(project.description || '')} />
+                                </div>
+                                <div class="pt-6">
+                                    <span class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest group-hover:gap-4 transition-all">
+                                        View Case Study
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </section>
+                    </a>
+                ))}
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('active');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+<style is:global>
+    .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>

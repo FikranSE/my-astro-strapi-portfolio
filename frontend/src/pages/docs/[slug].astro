@@ -1,0 +1,63 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+
+export async function getStaticPaths() {
+    return [
+        { params: { slug: 'intro' } },
+        { params: { slug: 'getting-started' } },
+        { params: { slug: 'requirements' } },
+        { params: { slug: 'architecture' } },
+        { params: { slug: 'data-modeling' } },
+        { params: { slug: 'api-usage' } },
+        { params: { slug: 'cicd' } },
+        { params: { slug: 'deployment' } },
+    ];
+}
+
+const { slug } = Astro.params;
+const title = slug?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+---
+
+<Layout title={`${title} - Documentation`}>
+    <Header />
+
+    <main class="pt-32 pb-20 max-w-4xl mx-auto px-4 sm:px-6">
+        <nav class="flex items-center gap-2 text-sm text-gray-500 mb-12">
+            <a href="/" class="hover:text-white transition-colors">Home</a>
+            <span>/</span>
+            <a href="/docs" class="hover:text-white transition-colors">Docs</a>
+            <span>/</span>
+            <span class="text-gray-300 capitalize">{slug?.replace('-', ' ')}</span>
+        </nav>
+
+        <article class="prose-custom">
+            <h1 class="text-white text-4xl md:text-5xl font-bold mb-8">{title}</h1>
+            
+            <p class="text-xl text-gray-400 leading-relaxed mb-12">
+                This is the documentation for <strong>{title}</strong>. 
+                Configure your Strapi backend to serve real content for this page.
+            </p>
+
+            <div class="p-8 border border-white/10 rounded-3xl bg-white/5 space-y-6">
+                <h2 class="text-white mt-0">Quick Guide</h2>
+                <p>To populate this page with real data from Strapi:</p>
+                <ol>
+                    <li>Create a <code>Documentation</code> collection type in Strapi.</li>
+                    <li>Add fields for <code>title</code>, <code>slug</code>, and <code>content</code> (Markdown or Blocks).</li>
+                    <li>Update <code>getStaticPaths</code> in this file to fetch all slugs via GraphQL.</li>
+                    <li>Update the template to render the content using <code>set:html</code>.</li>
+                </ol>
+            </div>
+
+            <div class="mt-12 flex items-center justify-between border-t border-white/5 pt-8">
+                <a href="/docs" class="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-2">
+                    &larr; Back to Docs
+                </a>
+                <div class="text-xs text-gray-500 italic">
+                    Last updated: January 2026
+                </div>
+            </div>
+        </article>
+    </main>
+</Layout>
